@@ -1,0 +1,11 @@
+# Django Web Framework
+Django>=5.2.10
+
+# Django REST Framework for building APIs
+djangorestframework>=3.14.0
+
+# Django CORS Headers for handling Cross-Origin requests
+django-cors-headers>=4.3.0
+
+# Python-decouple for environment variables (optional but recommended)
+python-decouple>=3.8

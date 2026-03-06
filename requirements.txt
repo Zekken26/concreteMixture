@@ -1,0 +1,3 @@
+# Root Python requirements for this repository.
+# Installs backend dependencies.
+-r backend/requirements.txt
