@@ -17,4 +17,7 @@ urlpatterns = [
     
     # GET endpoint for mix history
     path('mix-history/', views.get_mix_history, name='get-mix-history'),
+
+    # DELETE endpoint for a single mix history entry
+    path('mix-history/<int:batch_id>/', views.delete_mix_history_item, name='delete-mix-history-item'),
 ]

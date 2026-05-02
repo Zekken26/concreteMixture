@@ -13,6 +13,7 @@
  */
 
 import { useMixData } from "@/hooks/useMixData";
+import { deleteMixHistoryItem } from "@/services/api";
 import {
   DashboardHeader,
   MixStatusCard,
@@ -33,6 +34,11 @@ const Index = () => {
     isRefreshing,
     refreshData,
   } = useMixData();
+
+  const handleDeleteHistoryItem = async (batch: { id: number }) => {
+    await deleteMixHistoryItem(batch.id);
+    await refreshData();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,7 +102,7 @@ const Index = () => {
         </div>
 
         {/* History Table - Full width */}
-        <MixHistoryTable history={mixHistory} />
+        <MixHistoryTable history={mixHistory} onDelete={handleDeleteHistoryItem} />
 
         {/* Footer */}
         <footer className="mt-8 pt-6 border-t text-center text-sm text-muted-foreground">

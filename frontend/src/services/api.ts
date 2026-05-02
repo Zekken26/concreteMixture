@@ -40,6 +40,14 @@ export const fetchMixHistory = async (limit: number = 50): Promise<MixBatch[]> =
 };
 
 /**
+ * Delete a mix batch from history
+ * Endpoint: DELETE /api/mix-history/:id/
+ */
+export const deleteMixHistoryItem = async (batchId: number): Promise<void> => {
+  await apiClient.delete(`/mix-history/${batchId}/`);
+};
+
+/**
  * Create a new mix batch (for ESP32)
  * Endpoint: POST /api/mix-data/
  */

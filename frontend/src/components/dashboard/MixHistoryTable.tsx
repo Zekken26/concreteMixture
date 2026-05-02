@@ -3,7 +3,21 @@
  * Displays historical batch data in a scrollable, responsive table
  */
 
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -18,6 +32,7 @@ import { MixBatch, MixStatus } from "@/types/concrete";
 
 interface MixHistoryTableProps {
   history: MixBatch[];
+  onDelete?: (batch: MixBatch) => Promise<void>;
 }
 
 // Badge styling for each status
@@ -39,7 +54,10 @@ const statusBadgeConfig: Record<
   },
 };
 
-export const MixHistoryTable = ({ history }: MixHistoryTableProps) => {
+export const MixHistoryTable = ({ history, onDelete }: MixHistoryTableProps) => {
+  const [pendingDelete, setPendingDelete] = useState<MixBatch | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Sort by timestamp (newest first)
   const sortedHistory = [...history].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -66,56 +84,110 @@ export const MixHistoryTable = ({ history }: MixHistoryTableProps) => {
       </CardHeader>
       <CardContent>
         {sortedHistory.length > 0 ? (
-          <ScrollArea className="h-80 rounded-md border">
-            <Table>
-              <TableHeader className="sticky top-0 bg-card z-10">
-                <TableRow>
-                  <TableHead className="font-semibold">Date/Time</TableHead>
-                  <TableHead className="text-right font-semibold">Cement (kg)</TableHead>
-                  <TableHead className="text-right font-semibold">Water (kg)</TableHead>
-                  <TableHead className="text-right font-semibold">Sand (kg)</TableHead>
-                  <TableHead className="text-right font-semibold">Gravel (kg, opt.)</TableHead>
-                  <TableHead className="text-right font-semibold">W/C Ratio</TableHead>
-                  <TableHead className="text-center font-semibold">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedHistory.map((batch, index) => (
-                  <TableRow
-                    key={`${batch.timestamp}-${index}`}
-                    className="hover:bg-muted/50"
-                  >
-                    <TableCell className="font-medium whitespace-nowrap">
-                      {formatDateTime(batch.timestamp)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {batch.cement_weight.toFixed(1)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {batch.water_weight.toFixed(1)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {batch.sand_weight.toFixed(1)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {batch.gravel_weight === 0 ? "--" : batch.gravel_weight.toFixed(1)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">
-                      {batch.wc_ratio.toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        className={statusBadgeConfig[batch.status]?.className || "bg-gray-500"}
-                      >
-                        {batch.status.toUpperCase().replace(/_/g, " ")}
-                      </Badge>
-                    </TableCell>
+          <>
+            <ScrollArea className="h-80 rounded-md border">
+              <Table>
+                <TableHeader className="sticky top-0 bg-card z-10">
+                  <TableRow>
+                    <TableHead className="font-semibold">Date/Time</TableHead>
+                    <TableHead className="text-right font-semibold">Cement (kg)</TableHead>
+                    <TableHead className="text-right font-semibold">Water (kg)</TableHead>
+                    <TableHead className="text-right font-semibold">Sand (kg)</TableHead>
+                    <TableHead className="text-right font-semibold">Gravel (kg, opt.)</TableHead>
+                    <TableHead className="text-right font-semibold">W/C Ratio</TableHead>
+                    <TableHead className="text-center font-semibold">Status</TableHead>
+                    <TableHead className="text-right font-semibold">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                </TableHeader>
+                <TableBody>
+                  {sortedHistory.map((batch) => (
+                    <TableRow
+                      key={batch.id}
+                      className="hover:bg-muted/50"
+                    >
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {formatDateTime(batch.timestamp)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {batch.cement_weight.toFixed(1)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {batch.water_weight.toFixed(1)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {batch.sand_weight.toFixed(1)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {batch.gravel_weight === 0 ? "--" : batch.gravel_weight.toFixed(1)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-semibold">
+                        {batch.wc_ratio.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          className={statusBadgeConfig[batch.status]?.className || "bg-gray-500"}
+                        >
+                          {batch.status.toUpperCase().replace(/_/g, " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setPendingDelete(batch)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+
+            <AlertDialog
+              open={pendingDelete !== null}
+              onOpenChange={(open) => {
+                if (!open && !isDeleting) {
+                  setPendingDelete(null);
+                }
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete history entry?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently remove the selected mix history record from the dashboard.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={isDeleting || !pendingDelete || !onDelete}
+                    onClick={async (event) => {
+                      event.preventDefault();
+                      if (!pendingDelete || !onDelete) return;
+
+                      setIsDeleting(true);
+                      try {
+                        await onDelete(pendingDelete);
+                        setPendingDelete(null);
+                      } finally {
+                        setIsDeleting(false);
+                      }
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         ) : (
           <div className="h-40 flex flex-col items-center justify-center border rounded-md">
             <p className="text-blue-600 font-semibold mb-1">No History Yet</p>

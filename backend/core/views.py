@@ -206,3 +206,39 @@ def get_mix_history(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['DELETE'])
+def delete_mix_history_item(request, batch_id):
+    """
+    DELETE /api/mix-history/<batch_id>/
+
+    Deletes a single historical mix batch record.
+    Used by the frontend dashboard to remove unwanted history entries.
+    """
+    try:
+        mix_batch = MixBatch.objects.get(pk=batch_id)
+        mix_batch.delete()
+
+        return Response(
+            {
+                'message': 'Mix history item deleted successfully'
+            },
+            status=status.HTTP_200_OK
+        )
+
+    except MixBatch.DoesNotExist:
+        return Response(
+            {
+                'message': 'Mix history item not found'
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {
+                'message': 'Error deleting mix history item',
+                'error': str(e)
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
